@@ -1,69 +1,57 @@
 # Black–Scholes Option Pricer (C++)
 
-Implementation of the Black–Scholes model for pricing European options written in modern C++.
+This project implements the classical Black–Scholes model for pricing European options using modern C++.
 
-The project computes option price and several Greeks and supports both single calculations and grid simulations with CSV export.
+The program computes option prices and several key Greeks. It also supports command-line parameters and a grid mode that exports pricing results to CSV for further analysis.
 
-This project was built as a learning exercise in:
-
-- quantitative finance
-- numerical models
-- modern C++ design
-- object-oriented architecture
+The goal of the project is to explore how quantitative finance models are implemented in real software systems while practicing clean C++ architecture and project structure.
 
 
-## Features
+## What the program can do
 
-- European Call / Put option pricing
-- Greeks calculation:
-  - Delta
-  - Gamma
-  - Vega
-- Command line interface
-- Grid mode for generating price surfaces
+The implementation currently supports:
+
+- pricing European call and put options
+- computing Greeks:
+  - delta
+  - gamma
+  - vega
+- command-line interface
+- grid mode for generating price data
 - CSV export for further analysis
-- Object-oriented architecture
 
-Option
- ├── CallOption
- └── PutOption
+The code uses an object-oriented design where a generic `Option` interface is implemented by `CallOption` and `PutOption` classes.
 
-- Built with CMake
+The project is built with CMake.
 
 
-## Mathematical Model
+## Mathematical model
 
-The Black–Scholes model prices European options assuming:
+The Black–Scholes model assumes that the underlying asset follows a lognormal process with constant volatility and interest rate.
 
-- lognormal asset dynamics
-- constant volatility
-- continuous compounding
-- no arbitrage
-
-The option price is computed using:
+The price of a European call option is given by:
 
 C = S N(d1) − K e^(−rT) N(d2)
 
 where
 
-d1 = ( ln(S/K) + (r + σ²/2)T ) / ( σ√T )
+d1 = ( ln(S/K) + (r + σ² / 2) T ) / ( σ √T )
 
-d2 = d1 − σ√T
+d2 = d1 − σ √T
 
 
-## Project Structure
+## Project structure
 
-black-scholes-fdm
+black-scholes-fdm/
 
 include/
-  bs.hpp
+    bs.hpp
 
 src/
-  bs.cpp
-  main.cpp
+    bs.cpp
+    main.cpp
 
 CMakeLists.txt
-README.md
 
 
 ## Build
@@ -82,58 +70,38 @@ make
 
 ## Usage
 
-Run the executable with parameters:
+Example calculation:
 
 ./black_scholes --S 100 --K 100 --r 0.05 --sigma 0.2 --T 1 --style call
 
 Parameters:
 
-S      — underlying price  
-K      — strike price  
-r      — risk-free interest rate  
-sigma  — volatility  
-T      — time to maturity  
-style  — call / put
+S – underlying price  
+K – strike price  
+r – risk-free rate  
+sigma – volatility  
+T – time to maturity  
+style – call or put
 
 
-## Grid Mode
+## Grid mode
 
-Generate prices for a range of underlying prices:
+Example:
 
 ./black_scholes --grid-S 50 150 101 --style call --out prices.csv
 
-This produces a CSV file suitable for plotting or further analysis.
+The program generates a CSV file that can be used for plotting price curves or further analysis.
 
 
-## Example Output
+## Future improvements
 
-price = 10.45  
-delta = 0.63  
-gamma = 0.018  
-vega  = 37.52  
+Possible extensions:
 
-
-## Planned Improvements
-
-Future extensions of the project may include:
-
-- Theta
-- Implied volatility solver
-- CRR binomial tree model
+- theta calculation
+- implied volatility solver
+- binomial tree model
 - Monte Carlo pricing
-- Volatility surfaces
-
-
-## Motivation
-
-The goal of this project is to better understand how financial models are implemented in real software systems.
-
-It also serves as practice in:
-
-- C++
-- numerical finance
-- project structure
-- Git / GitHub workflow
+- volatility surfaces
 
 
 ## Author
