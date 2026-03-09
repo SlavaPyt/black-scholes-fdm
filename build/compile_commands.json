@@ -1,0 +1,14 @@
+[
+{
+  "directory": "/Users/vyacheslav/Black-scholes-fdm/build",
+  "command": "/usr/bin/clang++  -I/Users/vyacheslav/Black-scholes-fdm/include -g -std=gnu++17 -arch arm64 -o CMakeFiles/black_scholes.dir/src/main.cpp.o -c /Users/vyacheslav/Black-scholes-fdm/src/main.cpp",
+  "file": "/Users/vyacheslav/Black-scholes-fdm/src/main.cpp",
+  "output": "CMakeFiles/black_scholes.dir/src/main.cpp.o"
+},
+{
+  "directory": "/Users/vyacheslav/Black-scholes-fdm/build",
+  "command": "/usr/bin/clang++  -I/Users/vyacheslav/Black-scholes-fdm/include -g -std=gnu++17 -arch arm64 -o CMakeFiles/black_scholes.dir/src/bs.cpp.o -c /Users/vyacheslav/Black-scholes-fdm/src/bs.cpp",
+  "file": "/Users/vyacheslav/Black-scholes-fdm/src/bs.cpp",
+  "output": "CMakeFiles/black_scholes.dir/src/bs.cpp.o"
+}
+]
