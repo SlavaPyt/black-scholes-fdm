@@ -4,14 +4,6 @@
 #include <iostream>
 #include <string>
 
-struct Outputs {
-    double price = 0.0;
-    double delta = 0.0;
-    double gamma = 0.0;
-    double vega  = 0.0;
-};
-
-Outputs compute(const BlackScholes& model, const std::string& style);
 
 int main(int argc, char* argv[])
 {
@@ -36,7 +28,7 @@ int main(int argc, char* argv[])
     // 2) Режимы/настройки инструмента
     //
     // style  — тип опциона ("call" / "put")
-    // method — метод (пока только "bs", позже добавим "crr" и т.п.)
+    // method — метод (пока только "bs", позже "crr" и т.п.)
     // ============================================================
     std::string style  = "call";
     std::string method = "bs";
@@ -143,6 +135,7 @@ int main(int argc, char* argv[])
         std::cout << "delta=" << q.delta << "\n";
         std::cout << "gamma=" << q.gamma << "\n";
         std::cout << "vega="  << q.vega  << "\n";
+        std::cout << "theta=" << q.theta << "\n";
 
         return 0;
     }
@@ -168,7 +161,7 @@ int main(int argc, char* argv[])
     }
 
     // Заголовок CSV
-    file << "S,price\n";
+    file << "S,price,delta,gamma,vega,theta\n";
 
     // Шаг сетки: n точек => n-1 интервалов
     double step = (grid_end - grid_start) / (grid_n - 1);
@@ -185,7 +178,13 @@ int main(int argc, char* argv[])
 
         Quote q = opt->quote();
 
-        file << S_j << "," << q.price;
+        file << S_j <<","
+             << q.price <<","
+             << q.delta <<","
+             << q.gamma <<","
+             << q.vega  <<","
+             << q.theta <<"\n";
+
     }
     // file закроется автоматически при выходе из main
 

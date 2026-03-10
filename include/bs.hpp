@@ -1,3 +1,6 @@
+#include <memory>
+#include <string>
+
 struct BSParams//Data tansfer object
 {
     double S;
@@ -13,7 +16,7 @@ struct BSParams//Data tansfer object
 
 struct Quote 
 {
-    double price, delta, gamma, vega;
+    double price, delta, gamma, vega, theta;
 };
 
 
@@ -30,6 +33,8 @@ public:
     double put_price()const;
     double delta_call() const;
     double delta_put() const;
+    double theta_call() const;
+    double theta_put() const;
     double gamma() const;
     double vega() const; 
 };
@@ -52,3 +57,5 @@ class PutOption : public Option {
         explicit PutOption(const BlackScholes& model);
         Quote quote() const override;
 };
+
+std::unique_ptr<Option> make_option(const std::string& style, const BlackScholes& model);

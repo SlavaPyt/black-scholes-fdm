@@ -1,5 +1,6 @@
 #include "bs.hpp"
 #include <cmath>
+#include <stdexcept>
 
 double BlackScholes::norm_cdf(double x) const {
     return 0.5 * (1 + std::erf(x / std::sqrt(2.0)));
@@ -42,6 +43,14 @@ double BlackScholes::vega() const{
     return p_.S*norm_pdf(d1())*std::sqrt(p_.T);
 }
 
+double BlackScholes::theta_call() const{
+    return -(p_.S * p_.sigma * norm_pdf(d1())/ (2 * std::sqrt(p_.T))-p_.r * p_.K * std::exp(-p_.r * p_.T)*norm_cdf(d2()));
+}
+
+double BlackScholes::theta_put() const{
+    return -(p_.S * p_.sigma * norm_pdf(d1())/ (2 * std::sqrt(p_.T))+p_.r * p_.K * std::exp(-p_.r * p_.T)*norm_cdf(-d2()));
+}
+
 CallOption::CallOption(const BlackScholes& model) : model_(model) {
     
 }
@@ -54,6 +63,7 @@ Quote CallOption::quote() const
     q.delta = model_.delta_call();
     q.gamma = model_.gamma();
     q.vega  = model_.vega();
+    q.theta = model_.theta_call(); 
 
     return q;
 }
@@ -70,6 +80,21 @@ Quote PutOption::quote() const
     q.delta = model_.delta_put();
     q.gamma = model_.gamma();
     q.vega  = model_.vega();
+    q.theta = model_.theta_put();
 
     return q;
+}
+
+BlackScholes::BlackScholes(const BSParams& p) : p_(p) {}
+
+std::unique_ptr<Option> make_option(const std::string& style, const BlackScholes& model){
+    if (style == "call"){
+        return std::make_unique<CallOption>(model);
+    }
+    else if (style == "put"){
+        return std::make_unique<PutOption>(model);
+    }
+    else{
+        throw std::runtime_error("Unknown option style");
+    }
 }
