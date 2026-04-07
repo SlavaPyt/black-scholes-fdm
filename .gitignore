@@ -1,3 +1,23 @@
+#build artifacts
 build/
+.o
+.obj
+.so 
+.dylib
+.dll
+.a
+
+#python
+__pycahse__/
+*.pyc 
+.venv/
+
+#ide
+.idea/
 .vscode/
+
+#mac_os
 .DS_Store
+
+#generated_data/plots
+#-

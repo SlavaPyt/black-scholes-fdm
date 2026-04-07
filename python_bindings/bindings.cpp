@@ -14,6 +14,7 @@ PYBIND11_MODULE(bs_engine,m) {
     .def_readwrite("T", &BSParams::T);
 
     py::class_<Quote>(m, "Quote")
+    .def(py::init<>())
     .def_readwrite("price", &Quote::price)
     .def_readwrite("delta", &Quote::delta)
     .def_readwrite("gamma", &Quote::gamma)
@@ -27,5 +28,25 @@ PYBIND11_MODULE(bs_engine,m) {
     .def("gamma", &BlackScholes::gamma)
     .def("vega", &BlackScholes::vega)
     .def("theta_call", &BlackScholes::theta_call)
-    .def("theta_put", &BlackScholes::theta_put);
+    .def("theta_put", &BlackScholes::theta_put)
+    .def("delta_call", &BlackScholes::delta_call)
+    .def("delta_put", &BlackScholes::delta_put);
+
+    m.def("quote", [](const std::string& style, const BSParams& params) {
+        BlackScholes model(params);
+        auto option = make_option(style, model);
+        return option->quote();
+    }, py::arg("style"), py::arg("params"));
+
+    m.def("call_quote", [](const BSParams& params){
+        BlackScholes model(params);
+        CallOption option(model);
+        return option.quote();
+    }, py::arg("params"));
+
+    m.def("put_quote", [] (const BSParams& params) {
+        BlackScholes model(params);
+        PutOption option(model);
+        return option.quote();
+    }, py::arg("params"));
 }
