@@ -16,9 +16,11 @@ The implementation currently supports:
   - delta
   - gamma
   - vega
-- command-line interface
-- grid mode for generating price data
-- CSV export for further analysis
+  - theta
+- a C++ command-line interface
+- grid mode with CSV export
+- Python bindings
+- Python plotting scripts for vizualization and analysis
 
 The code uses an object-oriented design where a generic `Option` interface is implemented by `CallOption` and `PutOption` classes.
 
@@ -51,22 +53,63 @@ src/
     bs.cpp
     main.cpp
 
-CMakeLists.txt
+python_bindings/
+    bindings.cpp
 
+python_tools/
+    plot_from_engine.py
+    test_bs_engine
+
+
+CMakeLists.txt
+README.md
 
 ## Build
 
-Clone the repository and build using CMake.
+Build the project with Cmake:
+cmake -S. -B build
+cmake --build build
 
-git clone https://github.com/SlavaPyt/black-scholes-fdm.git
-cd black-scholes-fdm
+This produces:
+1. black_scholes – the C++ executable
+2. bs_engine – the Python extension module built through pybind11
 
-mkdir build
-cd build
+## Python usage
 
-cmake ..
-make
+A python script imports the compiled module from the build/ directory abd call the C++ engine directly.
+Example workflow: 
 
+///
+import sys
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+project_root = Path(__file__).resolve().parent.parent
+build_dir = project_root / "build"
+sys.path.insert(0, str(build_dir))
+
+import bs_engine
+
+p = bs_engine.BSParams()
+p.S = 100.0
+p.K = 100.0
+p.r = 0.05
+p.sigma = 0.2
+p.T = 1.0
+///
+
+Then create parameters and request from the C++ engine
+
+## Plotting from python
+
+Current ploting workflow:
+1. Python creates arrays of S
+2. Python calls the C++ engine on each step
+3. Results are stored in Python lists
+4. mathplotlib is used to build plots
+This keeps:
+1. Computation in C++
+2. Visualisation in Python
 
 ## Usage
 
@@ -97,14 +140,22 @@ The program generates a CSV file that can be used for plotting price curves or f
 
 Possible extensions:
 
-- theta calculation
+- cleaner plotting scripts for all greeks
+- comparsion of call and put urves
+- parameter sweeps over volatility and maturity
 - implied volatility solver
 - binomial tree model
 - Monte Carlo pricing
-- volatility surfaces
+- finite-difference BS PDE solver
+- comparison of analytical and numerical methods
 
+
+## Why this project
+
+The main idea is to build small research tool by using numerical core in C++, convinient experemintation layer in Python and in future extension to PDE/finite-difference mehods
 
 ## Author
+Build as learning project in quantitative finance
 
 Vyacheslav  
-ETU "LETI"
+LETI university
