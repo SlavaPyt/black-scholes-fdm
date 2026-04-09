@@ -43,7 +43,7 @@ d2 = d1 − σ √T
 
 
 ## Project structure
-
+```bash
 black-scholes-fdm/
 
 include/
@@ -63,7 +63,7 @@ python_tools/
 
 CMakeLists.txt
 README.md
-
+```
 ## Build
 
 Build the project with Cmake:
@@ -79,7 +79,7 @@ This produces:
 A python script imports the compiled module from the build/ directory abd call the C++ engine directly.
 Example workflow: 
 
-///
+```python
 import sys
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -96,7 +96,7 @@ p.K = 100.0
 p.r = 0.05
 p.sigma = 0.2
 p.T = 1.0
-///
+```
 
 Then create parameters and request from the C++ engine
 
@@ -111,12 +111,15 @@ This keeps:
 1. Computation in C++
 2. Visualisation in Python
 
+##Example plot
+![Callprice_Vs_S](images/CallPrice_Vs_S.png)
+
 ## Usage
 
 Example calculation:
-
+```bash
 ./black_scholes --S 100 --K 100 --r 0.05 --sigma 0.2 --T 1 --style call
-
+```
 Parameters:
 
 S – underlying price  
@@ -130,9 +133,9 @@ style – call or put
 ## Grid mode
 
 Example:
-
+```bash
 ./black_scholes --grid-S 50 150 101 --style call --out prices.csv
-
+```
 The program generates a CSV file that can be used for plotting price curves or further analysis.
 
 
@@ -158,4 +161,5 @@ The main idea is to build small research tool by using numerical core in C++, co
 Build as learning project in quantitative finance
 
 Vyacheslav  
-LETI university
+ETU "LETI"
+
