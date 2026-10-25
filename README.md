@@ -1,165 +1,194 @@
 # Black–Scholes Option Pricer (C++)
 
-This project implements the classical Black–Scholes model for pricing European options using modern C++.
+[![CI](https://github.com/SlavaPyt/black-scholes-fdm/actions/workflows/ci.yml/badge.svg)](https://github.com/SlavaPyt/black-scholes-fdm/actions/workflows/ci.yml)
 
-The program computes option prices and several key Greeks. It also supports command-line parameters and a grid mode that exports pricing results to CSV for further analysis.
+This project implements the classical Black–Scholes model for pricing European options in modern C++ (C++17).
 
-The goal of the project is to explore how quantitative finance models are implemented in real software systems while practicing clean C++ architecture and project structure.
+The engine computes option prices and the main Greeks. It is available as a command-line tool, which can also export results over a grid of spot prices to CSV, and as a Python module, so experiments and plots can be written in Python while all computation runs in C++.
 
+The goal of the project is to explore how quantitative finance models are implemented in real software, while practicing clean C++ architecture and project structure.
 
-## What the program can do
+## Features
 
-The implementation currently supports:
+- Pricing of European call and put options
+- Greeks: delta, gamma, vega, theta
+- Input validation with clear error messages
+- Command-line interface with a grid mode and CSV export
+- Python bindings via pybind11
+- Python plotting script for visualization and analysis
+- Unit tests for the C++ core, the CLI and the Python module, run on every push by GitHub Actions
 
-- pricing European call and put options
-- computing Greeks:
-  - delta
-  - gamma
-  - vega
-  - theta
-- a C++ command-line interface
-- grid mode with CSV export
-- Python bindings
-- Python plotting scripts for vizualization and analysis
-
-The code uses an object-oriented design where a generic `Option` interface is implemented by `CallOption` and `PutOption` classes.
-
-The project is built with CMake.
-
+The code uses an object-oriented design: a generic `Option` interface is implemented by the `CallOption` and `PutOption` classes, which are created by the `make_option` factory.
 
 ## Mathematical model
 
-The Black–Scholes model assumes that the underlying asset follows a lognormal process with constant volatility and interest rate.
+The Black–Scholes model assumes that the underlying asset follows geometric Brownian motion with constant volatility σ and a constant risk-free rate r, and that the asset pays no dividends.
 
-The price of a European call option is given by:
+The prices of a European call and put are
 
-C = S N(d1) − K e^(−rT) N(d2)
+```
+C = S·N(d1) − K·e^(−rT)·N(d2)
+P = K·e^(−rT)·N(−d2) − S·N(−d1)
 
-where
+d1 = ( ln(S/K) + (r + σ²/2)·T ) / ( σ·√T )
+d2 = d1 − σ·√T
+```
 
-d1 = ( ln(S/K) + (r + σ² / 2) T ) / ( σ √T )
+where N is the standard normal CDF. Prices satisfy put–call parity: C − P = S − K·e^(−rT).
 
-d2 = d1 − σ √T
+Greeks (φ is the standard normal density):
 
+| Greek | Call | Put |
+|-------|------|-----|
+| delta | N(d1) | N(d1) − 1 |
+| gamma | φ(d1) / (S·σ·√T) | same as call |
+| vega  | S·φ(d1)·√T | same as call |
+| theta | −S·σ·φ(d1) / (2√T) − r·K·e^(−rT)·N(d2) | −S·σ·φ(d1) / (2√T) + r·K·e^(−rT)·N(−d2) |
+
+Units: vega is the change in price for a change of 1.00 in σ (divide by 100 for "per 1%"), theta is the change in price per year (divide by 365 for "per day").
 
 ## Project structure
-```bash
-black-scholes-fdm/
 
-include/
-    bs.hpp
-
-src/
-    bs.cpp
-    main.cpp
-
-python_bindings/
-    bindings.cpp
-
-python_tools/
-    plot_from_engine.py
-    test_bs_engine
-
-
-CMakeLists.txt
-README.md
 ```
+black-scholes-fdm/
+├── include/
+│   └── bs.hpp                 # model, option classes, factory
+├── src/
+│   ├── bs.cpp                 # pricing formulas
+│   └── main.cpp               # command-line interface
+├── python_bindings/
+│   └── bindings.cpp           # pybind11 module bs_engine
+├── python_tools/
+│   └── plot_from_engine.py    # price vs spot plot
+├── tests/
+│   ├── test_bs.cpp            # C++ unit tests
+│   └── test_bindings.py       # Python module tests
+├── images/
+├── .github/workflows/ci.yml   # GitHub Actions
+└── CMakeLists.txt
+```
+
 ## Build
 
-Build the project with Cmake:
-cmake -S. -B build
+Requirements: CMake 3.16+, a C++17 compiler and, for the Python module, Python 3.8+ with pybind11.
+
+```bash
+python -m pip install pybind11      # only needed for the Python module
+cmake -S . -B build
 cmake --build build
+```
 
 This produces:
-1. black_scholes – the C++ executable
-2. bs_engine – the Python extension module built through pybind11
+
+1. `black_scholes` – the command-line tool
+2. `bs_engine` – the Python extension module
+3. `bs_tests` – the C++ unit tests
+
+If pybind11 is not installed, CMake prints a warning and builds everything except the Python module. You can also turn it off explicitly with `-DBS_BUILD_PYTHON=OFF`.
+
+## Command-line usage
+
+Price a single option:
+
+```bash
+./build/black_scholes --S 100 --K 100 --r 0.05 --sigma 0.2 --T 1 --style call
+```
+
+```
+price=10.4506
+delta=0.636831
+gamma=0.018762
+vega=37.524
+theta=-6.41403
+```
+
+| Parameter | Meaning | Default |
+|-----------|---------|---------|
+| `--S` | spot price of the underlying | 100 |
+| `--K` | strike price | 100 |
+| `--r` | risk-free rate, per year | 0 |
+| `--sigma` | volatility, per year | 0.2 |
+| `--T` | time to maturity, in years | 1 |
+| `--style` | `call` or `put` | `call` |
+
+Run `./build/black_scholes --help` for the full list of options. Invalid input (a missing value, a non-numeric value, σ ≤ 0, an unknown option) produces an error message and a non-zero exit code.
+
+### Grid mode
+
+Price the option on N evenly spaced spot prices between START and END and save the results to CSV:
+
+```bash
+./build/black_scholes --grid-S 50 150 101 --style call --out prices.csv
+```
+
+The CSV has the columns `S,price,delta,gamma,vega,theta` and can be used for plotting or further analysis.
 
 ## Python usage
 
-A python script imports the compiled module from the build/ directory abd call the C++ engine directly.
-Example workflow: 
+After building, the module can be imported from the `build/` directory:
 
 ```python
 import sys
-import matplotlib.pyplot as plt
-from pathlib import Path
-
-project_root = Path(__file__).resolve().parent.parent
-build_dir = project_root / "build"
-sys.path.insert(0, str(build_dir))
+sys.path.insert(0, "build")
 
 import bs_engine
 
-p = bs_engine.BSParams()
-p.S = 100.0
-p.K = 100.0
-p.r = 0.05
-p.sigma = 0.2
-p.T = 1.0
+params = bs_engine.BSParams(S=100.0, K=100.0, r=0.05, sigma=0.2, T=1.0)
+
+call = bs_engine.quote("call", params)
+print(call)        # Quote(price=10.4506, delta=0.636831, gamma=0.018762, vega=37.524, theta=-6.41403)
+
+put = bs_engine.put_quote(params)
+print(put.price)   # 5.573526022256971
 ```
 
-Then create parameters and request from the C++ engine
+Invalid parameters raise `ValueError`.
 
-## Plotting from python
+## Plotting from Python
 
-Current ploting workflow:
-1. Python creates arrays of S
-2. Python calls the C++ engine on each step
-3. Results are stored in Python lists
-4. mathplotlib is used to build plots
-This keeps:
-1. Computation in C++
-2. Visualisation in Python
+The plotting workflow keeps computation in C++ and visualization in Python:
 
-##Example plot
-![Callprice_Vs_S](images/CallPrice_Vs_S.png)
+1. Python creates an array of spot prices S
+2. For each S it calls the C++ engine
+3. The results are collected in Python lists
+4. matplotlib builds the plot
 
-## Usage
-
-Example calculation:
 ```bash
-./black_scholes --S 100 --K 100 --r 0.05 --sigma 0.2 --T 1 --style call
+python python_tools/plot_from_engine.py                          # call price, shown on screen
+python python_tools/plot_from_engine.py --style put --sigma 0.3 --save put.png
 ```
-Parameters:
 
-S – underlying price  
-K – strike price  
-r – risk-free rate  
-sigma – volatility  
-T – time to maturity  
-style – call or put
+### Example plot
 
+![Call price vs S](images/CallPrice_Vs_S.png)
 
-## Grid mode
+## Tests
 
-Example:
 ```bash
-./black_scholes --grid-S 50 150 101 --style call --out prices.csv
+ctest --test-dir build --output-on-failure    # C++ unit tests and CLI checks
+python -m unittest discover -s tests -v       # Python module tests
 ```
-The program generates a CSV file that can be used for plotting price curves or further analysis.
 
+The tests check prices and Greeks against reference values (including the example from Hull, *Options, Futures, and Other Derivatives*), put–call parity, no-arbitrage bounds, Greeks against finite-difference derivatives of the price, and the handling of invalid input. GitHub Actions runs all of them on Linux and macOS for every push and pull request.
 
-## Future improvements
+## Roadmap
 
-Possible extensions:
-
-- cleaner plotting scripts for all greeks
-- comparsion of call and put urves
+- plotting scripts for all Greeks
+- comparison of call and put curves
 - parameter sweeps over volatility and maturity
 - implied volatility solver
 - binomial tree model
 - Monte Carlo pricing
-- finite-difference BS PDE solver
+- finite-difference solver for the Black–Scholes PDE (the "fdm" in the repository name)
 - comparison of analytical and numerical methods
-
 
 ## Why this project
 
-The main idea is to build small research tool by using numerical core in C++, convinient experemintation layer in Python and in future extension to PDE/finite-difference mehods
+The main idea is to build a small research tool with a numerical core in C++ and a convenient experimentation layer in Python, and to extend it later with PDE and finite-difference methods.
 
 ## Author
-Build as learning project in quantitative finance
+
+Built as a learning project in quantitative finance.
 
 Vyacheslav  
 ETU "LETI"
-

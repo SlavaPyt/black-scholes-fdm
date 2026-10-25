@@ -1,23 +1,27 @@
-#build artifacts
+# Build artifacts
 build/
-.o
-.obj
-.so 
-.dylib
-.dll
-.a
+cmake-build-*/
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+*.pyd
 
-#python
-__pycahse__/
-*.pyc 
+# Python
+__pycache__/
+*.pyc
 .venv/
+.pytest_cache/
 
-#ide
+# IDE
 .idea/
 .vscode/
 
-#mac_os
+# macOS
 .DS_Store
 
-#generated_data/plots
-#-
+# Generated data
+*.csv
