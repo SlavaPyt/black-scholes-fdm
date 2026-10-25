@@ -11,6 +11,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 option(BS_BUILD_PYTHON "Build the bs_engine Python module (requires pybind11)" ON)
+option(BS_BUILD_TESTS "Build the unit tests" ON)
 
 # ---------------------------------------------------------------------------
 # Pricing core, shared by the CLI, the Python module and the tests
@@ -59,4 +60,46 @@ if(BS_BUILD_PYTHON)
             "pybind11 not found, the Python module will not be built. "
             "Install it with 'pip install pybind11' or configure with -DBS_BUILD_PYTHON=OFF.")
     endif()
+endif()
+
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
+if(BS_BUILD_TESTS)
+    enable_testing()
+
+    add_executable(bs_tests tests/test_bs.cpp)
+    target_link_libraries(bs_tests PRIVATE bs_core)
+    add_test(NAME unit_tests COMMAND bs_tests)
+
+    # End-to-end checks of the command-line tool
+    add_test(NAME cli_single_call
+             COMMAND black_scholes --S 100 --K 100 --r 0.05 --sigma 0.2 --T 1 --style call)
+    set_tests_properties(cli_single_call PROPERTIES PASS_REGULAR_EXPRESSION "price=10\\.4506")
+
+    add_test(NAME cli_single_put
+             COMMAND black_scholes --S 100 --K 100 --r 0.05 --sigma 0.2 --T 1 --style put)
+    set_tests_properties(cli_single_put PROPERTIES PASS_REGULAR_EXPRESSION "price=5\\.57353")
+
+    add_test(NAME cli_grid
+             COMMAND black_scholes --grid-S 50 150 11 --out "${CMAKE_CURRENT_BINARY_DIR}/cli_grid.csv")
+    set_tests_properties(cli_grid PROPERTIES PASS_REGULAR_EXPRESSION "Wrote 11 rows")
+
+    add_test(NAME cli_help COMMAND black_scholes --help)
+
+    # Bad input must produce a clear error message instead of a crash
+    function(add_cli_error_test name expected_error)
+        add_test(NAME ${name} COMMAND black_scholes ${ARGN})
+        set_tests_properties(${name} PROPERTIES PASS_REGULAR_EXPRESSION "Error: ${expected_error}")
+    endfunction()
+
+    add_cli_error_test(cli_missing_value "--K requires a value" --K)
+    add_cli_error_test(cli_not_a_number "--sigma: 'abc' is not a number" --sigma abc)
+    add_cli_error_test(cli_invalid_sigma "sigma must be a positive" --sigma 0)
+    add_cli_error_test(cli_unknown_style "--style must be" --style straddle)
+    add_cli_error_test(cli_unknown_method "--method 'crr' is not implemented" --method crr)
+    add_cli_error_test(cli_unknown_argument "unknown argument" --bogus)
+    add_cli_error_test(cli_grid_too_few_points "--grid-S needs at least 2 points"
+                       --grid-S 50 150 1 --out unused.csv)
+    add_cli_error_test(cli_grid_without_out "--out is required" --grid-S 50 150 11)
 endif()
